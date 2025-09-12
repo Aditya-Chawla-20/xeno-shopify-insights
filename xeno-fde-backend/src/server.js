@@ -7,23 +7,40 @@ import { PrismaClient } from "@prisma/client";
 import tenantRoutes from "./routes/tenantRoutes.js";
 import shopifyRoutes from "./routes/shopifyRoutes.js";
 import syncRoutes from "./routes/syncRoutes.js";
-import metricsRoutes from "./routes/metricsRoutes.js"; // 1. Import metrics routes
+import metricsRoutes from "./routes/metricsRoutes.js";
+import webhooksRoutes from "./routes/webhooksRoutes.js"; // 1. Import webhook routes
 
 dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 
-// Middleware (must come before routes)
+// --- Middleware Setup ---
+
+// General middleware
 app.use(cors());
+
+// 2. Special middleware for the webhook route ONLY
+// This must come BEFORE the general express.json() parser.
+// It captures the raw request body, which is needed for HMAC signature verification.
+app.use('/webhooks/shopify', express.raw({ type: 'application/json' }), (req, res, next) => {
+    // Store the raw body as a string for the verification function
+    req.rawBody = req.body.toString();
+    // Then, parse the body as JSON for the controller to use
+    req.body = JSON.parse(req.rawBody);
+    next();
+});
+
+// General JSON parser for all other routes
 app.use(express.json());
 
-// API Routes
+// --- API Routes ---
 app.use("/tenant", tenantRoutes);
 app.use("/shopify", shopifyRoutes);
 app.use("/sync", syncRoutes);
-app.use("/metrics", metricsRoutes); // 2. Use metrics routes
+app.use("/metrics", metricsRoutes);
+app.use("/webhooks", webhooksRoutes); // 3. Use the webhook routes
 
-// Default and health-check routes
+// --- Default and Health-Check Routes ---
 app.get("/", (req, res) => {
   res.send("🚀 Xeno FDE Backend is running!");
 });
@@ -42,6 +59,7 @@ app.get("/users", async (req, res) => {
   }
 });
 
+// --- Server Initialization ---
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
