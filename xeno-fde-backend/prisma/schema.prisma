@@ -1,0 +1,147 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------
+// User & Tenant Models
+// ---------------------------
+
+// Users who log in to the dashboard
+model User {
+  id        String       @id @default(uuid())
+  email     String       @unique
+  password  String
+  name      String?
+  role      UserRole     @default(USER)
+  tenants   TenantUser[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+// Tenant = company or client
+model Tenant {
+  id        String         @id @default(uuid())
+  name      String
+  users     TenantUser[]
+  stores    ShopifyStore[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+// Many-to-many: user <-> tenant with role
+model TenantUser {
+  id        String     @id @default(uuid())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  tenantId  String
+  role      TenantRole @default(MEMBER)
+  createdAt DateTime   @default(now())
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum TenantRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// ---------------------------
+// Shopify Models
+// ---------------------------
+
+// Shopify store linked to a tenant
+model ShopifyStore {
+  id          String     @id @default(uuid())
+  tenant      Tenant     @relation(fields: [tenantId], references: [id])
+  tenantId    String
+  shopDomain  String     @unique
+  accessToken String
+  products    Product[]
+  orders      Order[]
+  customers   Customer[]
+  syncLogs    SyncLog[] // ✅ fixed relation
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// Shopify products
+model Product {
+  id        String       @id @default(uuid())
+  store     ShopifyStore @relation(fields: [storeId], references: [id])
+  storeId   String
+  shopifyId String       @unique
+  title     String
+  price     Float
+  currency  String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+// Shopify customers
+model Customer {
+  id        String       @id @default(uuid())
+  store     ShopifyStore @relation(fields: [storeId], references: [id])
+  storeId   String
+  shopifyId String       @unique
+  email     String?
+  firstName String?
+  lastName  String?
+  orders    Order[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+// Shopify orders
+model Order {
+  id          String       @id @default(uuid())
+  store       ShopifyStore @relation(fields: [storeId], references: [id])
+  storeId     String
+  shopifyId   String       @unique
+  customer    Customer?    @relation(fields: [customerId], references: [id])
+  customerId  String?
+  totalAmount Float
+  currency    String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+// ---------------------------
+// Sync Logs
+// ---------------------------
+
+// Track sync jobs (when ingestion happens)
+model SyncLog {
+  id        String       @id @default(uuid())
+  store     ShopifyStore @relation(fields: [storeId], references: [id])
+  storeId   String
+  entity    SyncEntity
+  status    SyncStatus
+  message   String?
+  createdAt DateTime     @default(now())
+}
+
+enum SyncEntity {
+  PRODUCTS
+  CUSTOMERS
+  ORDERS
+}
+
+enum SyncStatus {
+  SUCCESS
+  FAILED
+  RUNNING
+}
