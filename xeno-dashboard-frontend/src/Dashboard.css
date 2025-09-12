@@ -1,0 +1,91 @@
+/* src/Dashboard.css */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f4f7fa;
+    margin: 0;
+    color: #333;
+}
+
+.dashboard-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+header h1 {
+    font-size: 2.2rem;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.card {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+.card h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #7f8c8d;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.card p {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #34495e;
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.chart-card, .list-card {
+    background-color: #fff;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card h2, .list-card h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+}
+
+.list-card table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.list-card th, .list-card td {
+    padding: 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 0.9rem;
+}
+
+.list-card th {
+    font-weight: 600;
+    color: #7f8c8d;
+}
+
+.list-card tr:last-child td {
+    border-bottom: none;
+}
