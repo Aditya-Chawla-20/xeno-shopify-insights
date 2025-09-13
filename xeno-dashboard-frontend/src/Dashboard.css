@@ -89,3 +89,22 @@ header h1 {
 .list-card tr:last-child td {
     border-bottom: none;
 }
+/* Add this to the end of src/Dashboard.css */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logout-button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.logout-button:hover {
+    background-color: #c0392b;
+}

@@ -4,11 +4,12 @@ import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 
 // Route imports
+import authRoutes from "./routes/authRoutes.js";         // <-- NEW: For authentication
 import tenantRoutes from "./routes/tenantRoutes.js";
 import shopifyRoutes from "./routes/shopifyRoutes.js";
 import syncRoutes from "./routes/syncRoutes.js";
 import metricsRoutes from "./routes/metricsRoutes.js";
-import webhooksRoutes from "./routes/webhooksRoutes.js"; // 1. Import webhook routes
+import webhooksRoutes from "./routes/webhooksRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -19,13 +20,9 @@ const prisma = new PrismaClient();
 // General middleware
 app.use(cors());
 
-// 2. Special middleware for the webhook route ONLY
-// This must come BEFORE the general express.json() parser.
-// It captures the raw request body, which is needed for HMAC signature verification.
+// Special middleware for the webhook route
 app.use('/webhooks/shopify', express.raw({ type: 'application/json' }), (req, res, next) => {
-    // Store the raw body as a string for the verification function
     req.rawBody = req.body.toString();
-    // Then, parse the body as JSON for the controller to use
     req.body = JSON.parse(req.rawBody);
     next();
 });
@@ -34,11 +31,12 @@ app.use('/webhooks/shopify', express.raw({ type: 'application/json' }), (req, re
 app.use(express.json());
 
 // --- API Routes ---
+app.use("/auth", authRoutes);                         // <-- NEW: Public routes for login/register
 app.use("/tenant", tenantRoutes);
 app.use("/shopify", shopifyRoutes);
 app.use("/sync", syncRoutes);
 app.use("/metrics", metricsRoutes);
-app.use("/webhooks", webhooksRoutes); // 3. Use the webhook routes
+app.use("/webhooks", webhooksRoutes);
 
 // --- Default and Health-Check Routes ---
 app.get("/", (req, res) => {
@@ -49,11 +47,13 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Backend is running 🚀" });
 });
 
-// Example test route to get all users
+// Example test route to get all users (will fail if you don't have a User model)
 app.get("/users", async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
-    res.json(users);
+    // This route might fail if you don't have a `User` model, it's just an example.
+    // Our auth uses the `Tenant` model for users.
+    const tenantsAsUsers = await prisma.tenant.findMany();
+    res.json(tenantsAsUsers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

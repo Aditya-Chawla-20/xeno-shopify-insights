@@ -2,7 +2,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  // output   = "../generated/prisma"
 }
 
 datasource db {
@@ -17,53 +16,31 @@ datasource db {
 
 // Users who log in to the dashboard
 model User {
-  id        String       @id @default(uuid())
-  email     String       @unique
-  password  String
-  name      String?
-  role      UserRole     @default(USER)
-  tenants   TenantUser[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id           String   @id @default(uuid())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId     String
 }
 
 // Tenant = company or client
 model Tenant {
   id        String         @id @default(uuid())
   name      String
-  users     TenantUser[]
+  users     User[]
   stores    ShopifyStore[]
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
-}
-
-// Many-to-many: user <-> tenant with role
-model TenantUser {
-  id        String     @id @default(uuid())
-  user      User       @relation(fields: [userId], references: [id])
-  userId    String
-  tenant    Tenant     @relation(fields: [tenantId], references: [id])
-  tenantId  String
-  role      TenantRole @default(MEMBER)
-  createdAt DateTime   @default(now())
-}
-
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum TenantRole {
-  OWNER
-  ADMIN
-  MEMBER
 }
 
 // ---------------------------
 // Shopify Models
 // ---------------------------
 
-// Shopify store linked to a tenant
 model ShopifyStore {
   id          String     @id @default(uuid())
   tenant      Tenant     @relation(fields: [tenantId], references: [id])
@@ -73,12 +50,11 @@ model ShopifyStore {
   products    Product[]
   orders      Order[]
   customers   Customer[]
-  syncLogs    SyncLog[] // ✅ fixed relation
+  syncLogs    SyncLog[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
 
-// Shopify products
 model Product {
   id        String       @id @default(uuid())
   store     ShopifyStore @relation(fields: [storeId], references: [id])
@@ -91,7 +67,6 @@ model Product {
   updatedAt DateTime     @updatedAt
 }
 
-// Shopify customers
 model Customer {
   id        String       @id @default(uuid())
   store     ShopifyStore @relation(fields: [storeId], references: [id])
@@ -105,7 +80,6 @@ model Customer {
   updatedAt DateTime     @updatedAt
 }
 
-// Shopify orders
 model Order {
   id          String       @id @default(uuid())
   store       ShopifyStore @relation(fields: [storeId], references: [id])
@@ -123,17 +97,17 @@ model Order {
 // Sync Logs
 // ---------------------------
 
-// Track sync jobs (when ingestion happens)
 model SyncLog {
   id        String       @id @default(uuid())
   store     ShopifyStore @relation(fields: [storeId], references: [id])
   storeId   String
-  entity    SyncEntity
-  status    SyncStatus
+  entity    SyncEntity   // <-- Reverted to enum
+  status    SyncStatus   // <-- Reverted to enum
   message   String?
   createdAt DateTime     @default(now())
 }
 
+// Enums for SyncLog (restored)
 enum SyncEntity {
   PRODUCTS
   CUSTOMERS
