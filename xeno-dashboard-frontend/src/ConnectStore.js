@@ -1,7 +1,6 @@
-// src/ConnectStore.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import './Login.css'; // Reuse login styles
+import './Login.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
@@ -23,18 +22,15 @@ const ConnectStore = ({ onConnectSuccess }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            // Step 1: Connect the store
             const connectResponse = await apiClient.post('/shopify/connect', { shopDomain, accessToken });
             const storeId = connectResponse.data.id;
             
-            // Step 2: Automatically trigger the syncs
             await Promise.all([
                 apiClient.post('/sync/products', { storeId }),
                 apiClient.post('/sync/customers', { storeId }),
                 apiClient.post('/sync/orders', { storeId })
             ]);
 
-            // Step 3: Notify parent component of success
             onConnectSuccess();
 
         } catch (err) {

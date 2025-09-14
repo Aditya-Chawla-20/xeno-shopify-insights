@@ -1,4 +1,3 @@
-// src/Home.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Dashboard from './Dashboard';
@@ -24,7 +23,6 @@ const Home = () => {
             });
             const response = await apiClient.get(`/shopify/stores/${tenantId}`);
             
-            // If the array is not empty, a store is connected
             if (response.data.length > 0) {
                 setHasStore(true);
             } else {
@@ -46,8 +44,6 @@ const Home = () => {
         return <div>Loading...</div>;
     }
 
-    // If a store is connected, show the dashboard.
-    // If not, show the ConnectStore page and pass the function to re-check when successful.
     return hasStore ? <Dashboard /> : <ConnectStore onConnectSuccess={checkStoreStatus} />;
 };
 

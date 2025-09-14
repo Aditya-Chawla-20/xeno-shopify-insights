@@ -30,6 +30,7 @@ export const getMetricsSummary = async (req, res) => {
     try {
         const storeId = req.store.id;
 
+        const totalProducts = await prisma.product.count({ where: { storeId } });
         const totalCustomers = await prisma.customer.count({ where: { storeId } });
         const totalOrders = await prisma.order.count({ where: { storeId } });
 
@@ -39,6 +40,7 @@ export const getMetricsSummary = async (req, res) => {
         });
 
         res.json({
+            totalProducts,
             totalCustomers,
             totalOrders,
             totalRevenue: revenue._sum.totalAmount || 0,

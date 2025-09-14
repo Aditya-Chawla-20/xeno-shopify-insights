@@ -35,8 +35,20 @@ export const register = async (req, res) => {
                 tenantId: newTenant.id,
             },
         });
+        
+        // Create and return a token immediately for a seamless experience
+        const token = jwt.sign(
+            { userId: newUser.id, email: newUser.email, tenantId: newTenant.id, name: newUser.name },
+            JWT_SECRET,
+            { expiresIn: '1d' }
+        );
 
-        res.status(201).json({ message: "User and Tenant created successfully.", userId: newUser.id, tenantId: newTenant.id });
+        res.status(201).json({ 
+            message: "User and Tenant created successfully.", 
+            token,
+            user: { id: newUser.id, name: newUser.name, email: newUser.email, tenantId: newTenant.id }
+        });
+
     } catch (error) {
         console.error("Registration error:", error);
         res.status(500).json({ error: "Server error during registration." });
@@ -61,7 +73,7 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { userId: user.id, email: user.email, tenantId: user.tenantId },
+            { userId: user.id, email: user.email, tenantId: user.tenantId, name: user.name },
             JWT_SECRET,
             { expiresIn: '1d' }
         );

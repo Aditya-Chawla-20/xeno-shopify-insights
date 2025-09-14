@@ -1,4 +1,3 @@
-/* src/Dashboard.css */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: #f4f7fa;
@@ -12,16 +11,58 @@ body {
     margin: 0 auto;
 }
 
-header h1 {
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* CHANGE: Align items vertically */
+    margin-bottom: 2rem;
+}
+
+.header-text h1 {
+    margin: 0;
     font-size: 2.2rem;
     color: #2c3e50;
-    margin-bottom: 2rem;
-    text-align: center;
+}
+
+.header-text p {
+    margin: 0.25rem 0 0 0;
+    font-size: 1rem;
+    color: #7f8c8d;
+}
+
+/* CHANGE: New container for user info */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* CHANGE: Style for the user's email */
+.user-email {
+    color: #555;
+    font-weight: 500;
+}
+
+/* CHANGE: Smaller logout button */
+.logout-button {
+    padding: 0.5rem 1rem; /* Reduced padding */
+    border: none;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 6px; /* Slightly more rounded */
+    cursor: pointer;
+    font-size: 0.85rem; /* Reduced font size */
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.logout-button:hover {
+    background-color: #c0392b;
 }
 
 .summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2.5rem;
 }
@@ -63,48 +104,106 @@ header h1 {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.chart-card h2, .list-card h2 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: #2c3e50;
-}
-
-.list-card table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.list-card th, .list-card td {
-    padding: 0.8rem;
-    text-align: left;
-    border-bottom: 1px solid #ecf0f1;
-    font-size: 0.9rem;
-}
-
-.list-card th {
-    font-weight: 600;
-    color: #7f8c8d;
-}
-
-.list-card tr:last-child td {
-    border-bottom: none;
-}
-/* Add this to the end of src/Dashboard.css */
-header {
+.chart-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 1.5rem;
 }
-.logout-button {
-    padding: 0.6rem 1.2rem;
-    border: none;
-    background-color: #e74c3c;
+
+.chart-header h2 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+/* Customer List Styles */
+.customer-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.customer-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.customer-item:last-child {
+    border-bottom: none;
+}
+
+.customer-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #3498db;
     color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 600;
+    margin-right: 1rem;
+    text-transform: uppercase;
+    flex-shrink: 0;
 }
-.logout-button:hover {
-    background-color: #c0392b;
+
+.customer-details {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.customer-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.customer-email {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.customer-spent {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-left: 1rem;
+}
+
+/* Skeleton Loading Styles */
+.skeleton {
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% { background-color: #e0e0e0; }
+    50% { background-color: #f0f0f0; }
+    100% { background-color: #e0e0e0; }
+}
+
+.skeleton-text-large {
+    width: 70%;
+    height: 2.5rem;
+    margin: 0 auto;
+}
+
+.skeleton-chart {
+    width: 100%;
+    height: 300px;
+}
+
+.skeleton-list-item {
+    width: 100%;
+    height: 56px;
+    margin-bottom: 0.5rem;
 }
