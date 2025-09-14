@@ -65,6 +65,7 @@ model Product {
   currency  String
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  @@index([storeId])
 }
 
 model Customer {
@@ -78,6 +79,7 @@ model Customer {
   orders    Order[]
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  @@index([storeId])
 }
 
 model Order {
@@ -91,6 +93,7 @@ model Order {
   currency    String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  @@index([storeId])
 }
 
 // ---------------------------
