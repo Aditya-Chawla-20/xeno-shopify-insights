@@ -54,34 +54,30 @@ export const getMetricsSummary = async (req, res) => {
 export const getOrdersByDate = async (req, res) => {
     try {
         const storeId = req.store.id;
+        // Use default dates if not provided
         const { startDate, endDate } = req.query;
+        const start = startDate ? new Date(startDate) : new Date(0);
+        const end = endDate ? new Date(endDate) : new Date();
 
-        // Use Prisma's `groupBy` to aggregate data directly in the database
-        const ordersGroupedByDate = await prisma.order.groupBy({
-            by: ['createdAt'], // The field to group by
-            where: {
-                storeId,
-                createdAt: {
-                    gte: startDate ? new Date(startDate) : new Date(0),
-                    lte: endDate ? new Date(endDate) : new Date(),
-                },
-            },
-            _sum: {
-                totalAmount: true, // Sum the totalAmount for each group
-            },
-            _count: {
-                _all: true, // Count the number of orders in each group
-            },
-            orderBy: {
-                createdAt: 'asc',
-            },
-        });
+        // THIS IS THE CORRECTED QUERY
+        // It uses a raw SQL query to group orders by the day they were created.
+        // DATE_TRUNC('day', "createdAt") is a PostgreSQL function to truncate the time part.
+        const result = await prisma.$queryRaw`
+            SELECT 
+                DATE_TRUNC('day', "createdAt")::date as date, 
+                SUM("totalAmount") as revenue, 
+                COUNT(id) as count
+            FROM "Order"
+            WHERE "storeId" = ${storeId} AND "createdAt" >= ${start} AND "createdAt" <= ${end}
+            GROUP BY DATE_TRUNC('day', "createdAt")
+            ORDER BY date ASC;
+        `;
 
         // Format the data for the frontend chart
-        const series = ordersGroupedByDate.map(group => ({
-            date: group.createdAt.toISOString().split('T')[0], // Format date as YYYY-MM-DD
-            revenue: group._sum.totalAmount || 0,
-            count: group._count._all,
+        const series = result.map(group => ({
+            date: new Date(group.date).toISOString().split('T')[0], // Format date as YYYY-MM-DD
+            revenue: parseFloat(group.revenue) || 0,
+            count: Number(group.count), // Convert BigInt to Number
         }));
 
         res.json(series);
