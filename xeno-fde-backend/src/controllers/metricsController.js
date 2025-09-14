@@ -132,3 +132,29 @@ export const getTopCustomers = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch top customers." });
     }
 };
+// Add this new function to the end of your metricsController.js
+export const getRevenueOverTime = async (req, res) => {
+    try {
+        const storeId = req.store.id;
+        
+        const result = await prisma.$queryRaw`
+            SELECT 
+                DATE("createdAt") as date, 
+                SUM("totalAmount") as revenue
+            FROM "Order"
+            WHERE "storeId" = ${storeId}
+            GROUP BY DATE("createdAt")
+            ORDER BY date ASC;
+        `;
+
+        const series = result.map(group => ({
+            date: new Date(group.date).toISOString().split('T')[0],
+            revenue: parseFloat(group.revenue) || 0,
+        }));
+
+        res.json(series);
+    } catch (error) {
+        console.error("Error fetching revenue over time:", error);
+        res.status(500).json({ error: "Failed to fetch revenue data." });
+    }
+};

@@ -50,18 +50,12 @@ sequenceDiagram
     Note over Frontend, Backend: Dashboard Data
     Frontend->>+Backend: GET /metrics/{tenantId}/summary
     Backend->>+Database: Query Aggregated Data
-    Database-->>-Backend: Return Metrics
-    Backend-->>-Frontend: Return JSON Response
-```
-
-## Database Schema
+    Database-->>-Backend: Return MetricsDatabase Schema
 
 The schema is managed by Prisma and defines the relationships between Tenants, Shopify Stores, and the ingested data.
 
-<details>
-<summary>Click to view Prisma Schema</summary>
-
-```prisma
+<details> <summary>Click to view Prisma Schema</summary>
+    Backend-->>-Frontend: Return JSON Response
 // /xeno-fde-backend/prisma/schema.prisma
 
 generator client {
@@ -149,78 +143,77 @@ model SyncLog {
   message   String?
   createdAt DateTime      @default(now())
 }
-```
 </details>
+API Endpoints
+Method	Endpoint	Description
+POST	/tenant	Creates a new tenant.
+POST	/shopify/connect	Connects a Shopify store to an existing tenant.
+POST	/sync/products	Manually triggers a sync for all products in a store.
+POST	/sync/customers	Manually triggers a sync for all customers in a store.
+POST	/sync/orders	Manually triggers a sync for all orders in a store.
+GET	/metrics/{tenantId}/summary	Gets high-level metrics (revenue, orders, customers).
+GET	/metrics/{tenantId}/orders-by-date	Gets a time-series of orders and revenue.
+GET	/metrics/{tenantId}/top-customers	Gets the top 5 customers by total spend.
+POST	/webhooks/shopify	Receives real-time webhook events from Shopify.
+Local Development Setup
+Prerequisites
 
-## API Endpoints
+Node.js (v18 or later)
 
-| Method | Endpoint                             | Description                                            |
-| ------ | ------------------------------------ | ------------------------------------------------------ |
-| `POST` | `/tenant`                            | Creates a new tenant.                                  |
-| `POST` | `/shopify/connect`                   | Connects a Shopify store to an existing tenant.        |
-| `POST` | `/sync/products`                     | Manually triggers a sync for all products in a store.  |
-| `POST` | `/sync/customers`                    | Manually triggers a sync for all customers in a store. |
-| `POST` | `/sync/orders`                       | Manually triggers a sync for all orders in a store.    |
-| `GET`  | `/metrics/{tenantId}/summary`        | Gets high-level metrics (revenue, orders, customers).  |
-| `GET`  | `/metrics/{tenantId}/orders-by-date` | Gets a time-series of orders and revenue.              |
-| `GET`  | `/metrics/{tenantId}/top-customers`  | Gets the top 5 customers by total spend.               |
-| `POST` | `/webhooks/shopify`                  | Receives real-time webhook events from Shopify.        |
+npm or yarn
 
-## Local Development Setup
+Git
 
-### Prerequisites
--   Node.js (v18 or later)
--   npm or yarn
--   Git
--   A free PostgreSQL database (e.g., from [Neon](https://neon.tech/))
+A free PostgreSQL database (e.g., from Neon
+)
 
-### Backend
-1.  **Clone the repository**:
-    ```bash
-    git clone [https://github.com/Aditya-Chawla-20/xeno-shopify-insights.git](https://github.com/Aditya-Chawla-20/xeno-shopify-insights.git)
-    cd xeno-shopify-insights/xeno-fde-backend
-    ```
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
-3.  **Set up environment variables**:
-    Create a `.env` file in the `xeno-fde-backend` directory and add your database URLs.
-    ```env
-    DATABASE_URL="your_neon_pooled_connection_string"
-    DIRECT_URL="your_neon_direct_connection_string"
-    ```
-4.  **Run database migrations**:
-    ```bash
-    npx prisma migrate dev
-    ```
-5.  **Start the server**:
-    ```bash
-    npm run dev
-    ```
-    The backend will be running at `http://localhost:4000`.
+Backend
 
-### Frontend
-1.  **Navigate to the frontend directory**:
-    ```bash
-    cd ../xeno-dashboard-frontend
-    ```
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
-3.  **Set up environment variables**:
-    Create a `.env.local` file in the `xeno-dashboard-frontend` directory.
-    ```env
-    REACT_APP_API_URL=http://localhost:4000
-    ```
-4.  **Start the application**:
-    ```bash
-    npm start
-    ```
-    The frontend will open at `http://localhost:3000`.
+Clone the repository:
+git clone https://github.com/Aditya-Chawla-20/xeno-shopify-insights.git
+cd xeno-shopify-insights/xeno-fde-backend
+Install dependencies:
+npm install
+Set up environment variables:
+Create a .env file in the xeno-fde-backend directory and add your database URLs.
+DATABASE_URL="your_neon_pooled_connection_string"
+DIRECT_URL="your_neon_direct_connection_string"
 
-## Assumptions & Trade-offs
--   **Onboarding**: For simplicity, the service accepts a pre-generated Shopify Admin API token during onboarding. A full production application would implement the complete Shopify OAuth 2.0 flow.
--   **Sync Strategy**: The primary method for data sync is real-time webhooks. Manual sync APIs are provided as a fallback and for initial data backfilling.
--   **Authentication**: The current version does not have user authentication for the dashboard to keep the focus on the data pipeline. This would be a critical addition for a production app.
+Run database migrations:
+npx prisma migrate dev
+
+Start the server:
+npm run dev
+
+The backend will be running at http://localhost:4000.
+
+Frontend
+
+Navigate to the frontend directory:
+cd ../xeno-dashboard-frontend
+
+nstall dependencies:
+
+npm install
+
+
+Set up environment variables:
+Create a .env.local file in the xeno-dashboard-frontend directory.
+
+REACT_APP_API_URL=http://localhost:4000
+
+
+Start the application:
+
+npm start
+
+
+The frontend will open at http://localhost:3000.
+
+Assumptions & Trade-offs
+
+Onboarding: For simplicity, the service accepts a pre-generated Shopify Admin API token during onboarding. A full production application would implement the complete Shopify OAuth 2.0 flow.
+
+Sync Strategy: The primary method for data sync is real-time webhooks. Manual sync APIs are provided as a fallback and for initial data backfilling.
+
+Authentication: The current version does not have user authentication for the dashboard to keep the focus on the data pipeline. This would be a critical addition for a production app.

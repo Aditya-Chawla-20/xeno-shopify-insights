@@ -4,7 +4,8 @@ import {
     getStoreForTenant,
     getMetricsSummary,
     getOrdersByDate,
-    getTopCustomers
+    getTopCustomers,
+    getRevenueOverTime
 } from "../controllers/metricsController.js";
 
 const router = express.Router();
@@ -18,5 +19,6 @@ router.use("/:tenantId", getStoreForTenant);
 router.get("/:tenantId/summary", getMetricsSummary);
 router.get("/:tenantId/orders-by-date", getOrdersByDate);
 router.get("/:tenantId/top-customers", getTopCustomers);
+router.get("/:tenantId/revenue-over-time", getRevenueOverTime); 
 
 export default router;

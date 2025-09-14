@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+// CHANGE: Import Bar instead of Line
+import { Bar } from 'react-chartjs-2'; 
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
+// CHANGE: Register BarElement for the new chart
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
@@ -28,7 +30,7 @@ const LogoutButton = ({ userEmail }) => {
 
 const Dashboard = () => {
     const [summary, setSummary] = useState(null);
-    const [ordersByDate, setOrdersByDate] = useState(null);
+    const [revenueData, setRevenueData] = useState(null);
     const [topCustomers, setTopCustomers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [userName, setUserName] = useState('');
@@ -50,26 +52,26 @@ const Dashboard = () => {
         });
 
         try {
-            const [summaryRes, ordersRes, topCustomersRes] = await Promise.all([
+            const [summaryRes, revenueRes, topCustomersRes] = await Promise.all([
                 apiClient.get(`/metrics/${tenantId}/summary`),
-                apiClient.get(`/metrics/${tenantId}/orders-by-date`),
+                apiClient.get(`/metrics/${tenantId}/revenue-over-time`),
                 apiClient.get(`/metrics/${tenantId}/top-customers`)
             ]);
 
             setSummary(summaryRes.data);
             setTopCustomers(topCustomersRes.data);
 
-            const formattedOrdersData = {
-                labels: ordersRes.data.map(d => d.date),
+            const formattedRevenueData = {
+                labels: revenueRes.data.map(d => d.date),
                 datasets: [{
                     label: 'Daily Revenue ($)',
-                    data: ordersRes.data.map(d => d.revenue),
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    fill: true,
+                    data: revenueRes.data.map(d => d.revenue),
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
                 }],
             };
-            setOrdersByDate(formattedOrdersData);
+            setRevenueData(formattedRevenueData);
 
         } catch (error) {
             console.error("Failed to fetch dashboard data:", error);
@@ -115,10 +117,9 @@ const Dashboard = () => {
 
             <div className="charts-container">
                 <div className="chart-card">
-                    <div className="chart-header">
-                        <h2>Revenue Over Last 7 Days</h2>
-                    </div>
-                    {isLoading ? <div className="skeleton skeleton-chart"></div> : <Line data={ordersByDate || { labels: [], datasets: [] }} />}
+                    <h2>Revenue Over Time</h2>
+                    {/* CHANGE: Replaced Line with Bar */}
+                    {isLoading ? <div className="skeleton skeleton-chart"></div> : <Bar data={revenueData || { labels: [], datasets: [] }} />}
                 </div>
 
                 <div className="list-card">
