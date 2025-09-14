@@ -59,26 +59,37 @@ export const getOrdersByDate = async (req, res) => {
     try {
         const storeId = req.store.id;
         const { startDate, endDate } = req.query;
+
         const start = startDate ? new Date(startDate) : new Date(0);
         const end = endDate ? new Date(endDate) : new Date();
 
-        // FINAL FIX: This raw query correctly handles timezones when grouping by day.
-        const result = await prisma.$queryRaw`
-            SELECT 
-                ("createdAt" AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::date as date, 
-                SUM("totalAmount") as revenue, 
-                COUNT(id)::int as count
-            FROM "Order"
-            WHERE "storeId" = ${storeId} AND "createdAt" >= ${start} AND "createdAt" <= ${end}
-            GROUP BY 1 -- Group by the first column (the truncated date)
-            ORDER BY date ASC;
-        `;
+        const orders = await prisma.order.findMany({
+            where: {
+                storeId,
+                createdAt: {
+                    gte: start,
+                    lte: end,
+                },
+            },
+            orderBy: {
+                createdAt: 'asc',
+            },
+        });
+        
+        // This logic correctly groups the orders by day
+        const revenueByDay = orders.reduce((acc, order) => {
+            const date = order.createdAt.toISOString().split('T')[0]; // Get 'YYYY-MM-DD'
+            if (!acc[date]) {
+                acc[date] = 0;
+            }
+            acc[date] += order.totalAmount;
+            return acc;
+        }, {});
 
-        // Format the data for the frontend chart
-        const series = result.map(group => ({
-            date: new Date(group.date).toISOString().split('T')[0],
-            revenue: parseFloat(group.revenue) || 0,
-            count: group.count,
+        // Format the aggregated data for the Chart.js
+        const series = Object.keys(revenueByDay).map(date => ({
+            date: date,
+            revenue: revenueByDay[date],
         }));
 
         res.json(series);
