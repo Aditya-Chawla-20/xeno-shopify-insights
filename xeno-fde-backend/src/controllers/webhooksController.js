@@ -1,18 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import crypto from 'crypto';
-
 const prisma = new PrismaClient();
-
-/*
-// NOTE: This security function is not used in the assignment for simplicity,
-// but it is crucial for a production application.
-const verifyShopifyWebhook = (req, secret) => {
-    const hmac = req.get('X-Shopify-Hmac-Sha256');
-    const body = req.rawBody;
-    const hash = crypto.createHmac('sha256', secret).update(body, 'utf8').digest('base64');
-    return hmac === hash;
-};
-*/
 
 export const handleShopifyWebhook = async (req, res) => {
     const shopDomain = req.get('X-Shopify-Shop-Domain');
@@ -34,6 +21,27 @@ export const handleShopifyWebhook = async (req, res) => {
 
         console.log(`Webhook received for topic: ${topic}`);
 
+        // --- LOGIC FOR CUSTOMER CREATION ---
+        if (topic === 'customers/create') {
+            await prisma.customer.upsert({
+                where: { shopifyId: webhookData.id.toString() },
+                update: {
+                    email: webhookData.email,
+                    firstName: webhookData.first_name,
+                    lastName: webhookData.last_name,
+                },
+                create: {
+                    storeId: store.id,
+                    shopifyId: webhookData.id.toString(),
+                    email: webhookData.email,
+                    firstName: webhookData.first_name,
+                    lastName: webhookData.last_name,
+                },
+            });
+            console.log(`Processed new customer: ${webhookData.id}`);
+        }
+
+        // --- LOGIC FOR ORDER CREATION ---
         if (topic === 'orders/create') {
             let internalCustomerId = null;
             if (webhookData.customer && webhookData.customer.id) {
