@@ -54,14 +54,12 @@ export const getMetricsSummary = async (req, res) => {
 export const getOrdersByDate = async (req, res) => {
     try {
         const storeId = req.store.id;
-        // Use default dates if not provided
+        // Use default dates if not provided by the user
         const { startDate, endDate } = req.query;
-        const start = startDate ? new Date(startDate) : new Date(0);
-        const end = endDate ? new Date(endDate) : new Date();
+        const start = startDate ? new Date(startDate) : new Date(0); // Default to the beginning of time
+        const end = endDate ? new Date(endDate) : new Date();       // Default to now
 
-        // THIS IS THE CORRECTED QUERY
-        // It uses a raw SQL query to group orders by the day they were created.
-        // DATE_TRUNC('day', "createdAt") is a PostgreSQL function to truncate the time part.
+        // FINAL FIX: Pass the 'start' and 'end' date variables into the query
         const result = await prisma.$queryRaw`
             SELECT 
                 DATE_TRUNC('day', "createdAt")::date as date, 
@@ -75,9 +73,9 @@ export const getOrdersByDate = async (req, res) => {
 
         // Format the data for the frontend chart
         const series = result.map(group => ({
-            date: new Date(group.date).toISOString().split('T')[0], // Format date as YYYY-MM-DD
+            date: new Date(group.date).toISOString().split('T')[0],
             revenue: parseFloat(group.revenue) || 0,
-            count: Number(group.count), // Convert BigInt to Number
+            count: Number(group.count),
         }));
 
         res.json(series);
