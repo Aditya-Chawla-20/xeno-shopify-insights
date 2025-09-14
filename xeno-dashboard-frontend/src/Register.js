@@ -1,4 +1,3 @@
-// src/Register.js
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
@@ -15,11 +14,12 @@ const Register = () => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
+        setError('');
         try {
             await axios.post(`${API_BASE_URL}/auth/register`, { name, email, password });
             navigate('/login'); // Redirect to login page after successful registration
         } catch (err) {
-            setError(err.response?.data?.error || 'Registration failed.');
+            setError(err.response?.data?.error || 'Registration failed. Please try again.');
         }
     };
 
@@ -29,21 +29,23 @@ const Register = () => {
                 <h2>Create Account</h2>
                 <form onSubmit={handleRegister}>
                     <div className="input-group">
-                        <label>Name</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+                        <label htmlFor="name">Name</label>
+                        <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
                     </div>
                     <div className="input-group">
-                        <label>Email</label>
-                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        <label htmlFor="email">Email</label>
+                        <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                     </div>
                     <div className="input-group">
-                        <label>Password</label>
-                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        <label htmlFor="password">Password</label>
+                        <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                     </div>
                     {error && <p className="error-message">{error}</p>}
                     <button type="submit">Register</button>
                 </form>
-                <p style={{ marginTop: '1rem' }}>Already have an account? <Link to="/login">Login here</Link></p>
+                <p style={{ marginTop: '1rem' }}>
+                    Already have an account? <Link to="/login">Login here</Link>
+                </p>
             </div>
         </div>
     );

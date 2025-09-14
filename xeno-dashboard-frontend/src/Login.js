@@ -1,7 +1,8 @@
-// src/Login.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import './Login.css'; // We'll create this file next
+import { useAuth } from './AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import './Login.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
@@ -9,21 +10,18 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError('');
         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-                email,
-                password,
-            });
-            // On successful login, store the token
-            localStorage.setItem('authToken', response.data.token);
-            // Reload the page to be redirected to the dashboard
-            window.location.href = '/';
+            const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
+            login(response.data.token); // Use context to set the token
+            navigate('/'); // Redirect to dashboard
         } catch (err) {
             setError('Invalid email or password.');
-            console.error('Login failed:', err);
         }
     };
 
@@ -56,6 +54,9 @@ const Login = () => {
                     {error && <p className="error-message">{error}</p>}
                     <button type="submit">Login</button>
                 </form>
+                <p style={{ marginTop: '1rem' }}>
+                    No account? <Link to="/register">Register here</Link>
+                </p>
             </div>
         </div>
     );

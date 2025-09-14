@@ -1,66 +1,81 @@
-// src/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { jwtDecode } from 'jwt-decode';
+import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
-// Register Chart.js components you'll use
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-// --- ⬇️ IMPORTANT: Replace this with your actual Tenant ID ⬇️ ---
-const TENANT_ID = '6f817f7b-c259-461d-8e6e-437f714d6d4a'; 
-const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+
+const LogoutButton = () => {
+    const { logout } = useAuth();
+    const navigate = useNavigate();
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+    return <button className="logout-button" onClick={handleLogout}>Logout</button>;
+};
 
 const Dashboard = () => {
     const [summary, setSummary] = useState(null);
     const [ordersByDate, setOrdersByDate] = useState(null);
     const [topCustomers, setTopCustomers] = useState([]);
+    const { isAuthenticated } = useAuth();
 
     useEffect(() => {
+        if (!isAuthenticated) return;
+
         const fetchData = async () => {
+            const token = localStorage.getItem('authToken');
+            const decodedToken = jwtDecode(token);
+            const tenantId = decodedToken.tenantId;
+
+            const apiClient = axios.create({
+                baseURL: API_BASE_URL,
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
             try {
-                // Fetch all data in parallel for speed
                 const [summaryRes, ordersRes, topCustomersRes] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/metrics/${TENANT_ID}/summary`),
-                    axios.get(`${API_BASE_URL}/metrics/${TENANT_ID}/orders-by-date`),
-                    axios.get(`${API_BASE_URL}/metrics/${TENANT_ID}/top-customers`)
+                    apiClient.get(`/metrics/${tenantId}/summary`),
+                    apiClient.get(`/metrics/${tenantId}/orders-by-date`),
+                    apiClient.get(`/metrics/${tenantId}/top-customers`)
                 ]);
 
                 setSummary(summaryRes.data);
                 setTopCustomers(topCustomersRes.data);
 
-                // Format data for the Line chart
                 const formattedOrdersData = {
                     labels: ordersRes.data.map(d => d.date),
-                    datasets: [
-                        {
-                            label: 'Daily Revenue ($)',
-                            data: ordersRes.data.map(d => d.revenue),
-                            borderColor: 'rgb(75, 192, 192)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            fill: true,
-                        },
-                    ],
+                    datasets: [{
+                        label: 'Daily Revenue ($)',
+                        data: ordersRes.data.map(d => d.revenue),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                    }],
                 };
                 setOrdersByDate(formattedOrdersData);
 
             } catch (error) {
                 console.error("Failed to fetch dashboard data:", error);
-                alert("Could not fetch data from the backend. Make sure the backend server is running.");
             }
         };
 
         fetchData();
-    }, []);
+    }, [isAuthenticated]);
 
     return (
         <div className="dashboard-container">
             <header>
                 <h1>Shopify Data Insights</h1>
+                <LogoutButton />
             </header>
-
-            {/* Summary Metrics */}
             <div className="summary-cards">
                 <div className="card">
                     <h2>Total Revenue</h2>
@@ -75,15 +90,11 @@ const Dashboard = () => {
                     <p>{summary ? summary.totalCustomers : '0'}</p>
                 </div>
             </div>
-
             <div className="charts-container">
-                {/* Orders by Date Chart */}
                 <div className="chart-card">
                     <h2>Revenue Over Time</h2>
                     {ordersByDate ? <Line data={ordersByDate} /> : <p>Loading chart data...</p>}
                 </div>
-
-                {/* Top Customers List */}
                 <div className="list-card">
                     <h2>Top Customers by Spend</h2>
                     {topCustomers.length > 0 ? (
