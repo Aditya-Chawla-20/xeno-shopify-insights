@@ -43,9 +43,18 @@ const Dashboard = () => {
         });
 
         try {
+            // --- FINAL FIX STARTS HERE ---
             const dateParams = new URLSearchParams();
-            if (startDate) dateParams.append('startDate', startDate);
-            if (endDate) dateParams.append('endDate', endDate);
+            
+            // 1. Check if a start date is selected and format it correctly
+            if (startDate) {
+                dateParams.append('startDate', new Date(startDate).toISOString().split('T')[0]);
+            }
+            // 2. Check if an end date is selected and format it correctly
+            if (endDate) {
+                dateParams.append('endDate', new Date(endDate).toISOString().split('T')[0]);
+            }
+            // --- FINAL FIX ENDS HERE ---
 
             const [summaryRes, ordersRes, topCustomersRes] = await Promise.all([
                 apiClient.get(`/metrics/${tenantId}/summary`),
