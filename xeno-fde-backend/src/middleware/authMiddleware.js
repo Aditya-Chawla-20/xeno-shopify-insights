@@ -1,4 +1,3 @@
-// src/middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -13,8 +12,9 @@ export const protect = (req, res, next) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, JWT_SECRET);
         
-        // Attach tenant info to the request for other controllers to use
-        req.tenant = decoded;
+        // CONSISTENCY FIX: Attach the decoded token payload as req.user
+        req.user = decoded;
+        
         next();
     } catch (error) {
         res.status(401).json({ error: "Not authorized, token failed." });

@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const connectStore = async (req, res) => {
-  // Get tenantId from the authenticated user, NOT the request body
+  // Now correctly reads `tenantId` from `req.user`
   const tenantId = req.user.tenantId;
   const { shopDomain, accessToken } = req.body;
 
@@ -28,6 +28,7 @@ export const connectStore = async (req, res) => {
 };
 
 export const getStoresByTenant = async (req, res) => {
+  // Now correctly reads `tenantId` from `req.user`
   const tenantId = req.user.tenantId;
   try {
     const stores = await prisma.shopifyStore.findMany({

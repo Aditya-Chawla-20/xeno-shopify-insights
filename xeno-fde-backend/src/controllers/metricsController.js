@@ -5,24 +5,25 @@ const prisma = new PrismaClient();
 // This middleware will fetch the store for a given tenant
 // We assume the frontend will know the tenantId
 export const getStoreForTenant = async (req, res, next) => {
-    const { tenantId } = req.params;
-    if (!tenantId) {
-        return res.status(400).json({ error: "Tenant ID is required" });
-    }
+    // CONSISTENCY FIX: Get tenantId from the logged-in user, not URL params
+    const tenantId = req.user.tenantId;
     
-    // For simplicity, we'll grab the first store associated with the tenant.
-    // In a real app, you might let the user select which store's metrics to view.
-    const store = await prisma.shopifyStore.findFirst({
-        where: { tenantId: tenantId },
-    });
+    try {
+        const store = await prisma.shopifyStore.findFirst({
+            where: { tenantId: tenantId },
+        });
 
-    if (!store) {
-        return res.status(404).json({ error: "No Shopify store found for this tenant." });
+        if (!store) {
+            return res.status(404).json({ error: "No Shopify store found for this tenant." });
+        }
+
+        req.store = store;
+        next();
+    } catch (error) {
+        res.status(500).json({ error: "Failed to verify store for tenant." });
     }
-
-    req.store = store; // Attach the store to the request object
-    next();
 };
+
 
 // GET /metrics/:tenantId/summary
 export const getMetricsSummary = async (req, res) => {
