@@ -1,6 +1,5 @@
-// src/routes/metricsRoutes.js
 import express from "express";
-import { protect } from '../middleware/authMiddleware.js';
+import { protect } from '../middleware/authMiddleware.js'; // <-- Import 'protect'
 import {
     getStoreForTenant,
     getMetricsSummary,
@@ -10,7 +9,9 @@ import {
 
 const router = express.Router();
 
-router.use(protect); 
+// Apply the 'protect' middleware to all routes in this file
+router.use(protect);
+
 // This middleware runs for all routes starting with /:tenantId
 router.use("/:tenantId", getStoreForTenant);
 
