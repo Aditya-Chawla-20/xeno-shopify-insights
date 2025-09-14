@@ -51,23 +51,26 @@ export const getMetricsSummary = async (req, res) => {
 };
 
 // GET /metrics/:tenantId/orders-by-date
+// src/controllers/metricsController.js
+
+// ... keep all other code the same ...
+
 export const getOrdersByDate = async (req, res) => {
     try {
         const storeId = req.store.id;
-        // Use default dates if not provided by the user
         const { startDate, endDate } = req.query;
-        const start = startDate ? new Date(startDate) : new Date(0); // Default to the beginning of time
-        const end = endDate ? new Date(endDate) : new Date();       // Default to now
+        const start = startDate ? new Date(startDate) : new Date(0);
+        const end = endDate ? new Date(endDate) : new Date();
 
-        // FINAL FIX: Pass the 'start' and 'end' date variables into the query
+        // FINAL FIX: This raw query correctly handles timezones when grouping by day.
         const result = await prisma.$queryRaw`
             SELECT 
-                DATE_TRUNC('day', "createdAt")::date as date, 
+                ("createdAt" AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::date as date, 
                 SUM("totalAmount") as revenue, 
-                COUNT(id) as count
+                COUNT(id)::int as count
             FROM "Order"
             WHERE "storeId" = ${storeId} AND "createdAt" >= ${start} AND "createdAt" <= ${end}
-            GROUP BY DATE_TRUNC('day', "createdAt")
+            GROUP BY 1 -- Group by the first column (the truncated date)
             ORDER BY date ASC;
         `;
 
@@ -75,7 +78,7 @@ export const getOrdersByDate = async (req, res) => {
         const series = result.map(group => ({
             date: new Date(group.date).toISOString().split('T')[0],
             revenue: parseFloat(group.revenue) || 0,
-            count: Number(group.count),
+            count: group.count,
         }));
 
         res.json(series);
@@ -85,6 +88,7 @@ export const getOrdersByDate = async (req, res) => {
     }
 };
 
+// ... keep getTopCustomers the same ...
 // GET /metrics/:tenantId/top-customers
 export const getTopCustomers = async (req, res) => {
     try {
