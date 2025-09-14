@@ -2,33 +2,34 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const connectStore = async (req, res) => {
+  // Get tenantId from the authenticated user, NOT the request body
+  const tenantId = req.user.tenantId;
+  const { shopDomain, accessToken } = req.body;
+
+  if (!shopDomain || !accessToken) {
+    return res.status(400).json({ error: "Shop domain and access token are required." });
+  }
+
   try {
-    const { tenantId, shopDomain, accessToken } = req.body;
-    if (!tenantId || !shopDomain || !accessToken) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-    if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+    if (!tenant) return res.status(404).json({ error: "Tenant not found for the authenticated user." });
 
-    // Use upsert instead of create to prevent unique constraint errors
     const store = await prisma.shopifyStore.upsert({
-      where: { shopDomain: shopDomain }, // Find the store by its unique domain
-      update: { accessToken: accessToken, tenantId: tenantId }, // What to update if it exists
-      create: { tenantId, shopDomain, accessToken }, // What to create if it doesn't exist
+      where: { shopDomain: shopDomain },
+      update: { accessToken: accessToken, tenantId: tenantId },
+      create: { tenantId, shopDomain, accessToken },
     });
 
     res.status(201).json(store);
-  } catch (error)
- {
+  } catch (error) {
     console.error("Error connecting store:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const getStoresByTenant = async (req, res) => {
+  const tenantId = req.user.tenantId;
   try {
-    const { tenantId } = req.params;
     const stores = await prisma.shopifyStore.findMany({
       where: { tenantId },
     });
