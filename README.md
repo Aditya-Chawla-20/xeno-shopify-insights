@@ -50,12 +50,14 @@ sequenceDiagram
     Note over Frontend, Backend: Dashboard Data
     Frontend->>+Backend: GET /metrics/{tenantId}/summary
     Backend->>+Database: Query Aggregated Data
-    Database-->>-Backend: Return MetricsDatabase Schema
-
+    Database-->>-Backend: Return Metrics
+    Backend-->>-Frontend: Return JSON Response
+Database Schema
 The schema is managed by Prisma and defines the relationships between Tenants, Shopify Stores, and the ingested data.
 
 <details> <summary>Click to view Prisma Schema</summary>
-    Backend-->>-Frontend: Return JSON Response
+prisma
+Copy code
 // /xeno-fde-backend/prisma/schema.prisma
 
 generator client {
@@ -155,63 +157,73 @@ GET	/metrics/{tenantId}/summary	Gets high-level metrics (revenue, orders, custom
 GET	/metrics/{tenantId}/orders-by-date	Gets a time-series of orders and revenue.
 GET	/metrics/{tenantId}/top-customers	Gets the top 5 customers by total spend.
 POST	/webhooks/shopify	Receives real-time webhook events from Shopify.
+
 Local Development Setup
 Prerequisites
-
 Node.js (v18 or later)
 
 npm or yarn
 
 Git
 
-A free PostgreSQL database (e.g., from Neon
-)
+A free PostgreSQL database (e.g., from Neon)
 
 Backend
-
 Clone the repository:
+
+bash
+Copy code
 git clone https://github.com/Aditya-Chawla-20/xeno-shopify-insights.git
 cd xeno-shopify-insights/xeno-fde-backend
 Install dependencies:
+
+bash
+Copy code
 npm install
 Set up environment variables:
 Create a .env file in the xeno-fde-backend directory and add your database URLs.
+
+env
+Copy code
 DATABASE_URL="your_neon_pooled_connection_string"
 DIRECT_URL="your_neon_direct_connection_string"
-
 Run database migrations:
+
+bash
+Copy code
 npx prisma migrate dev
-
 Start the server:
-npm run dev
 
+bash
+Copy code
+npm run dev
 The backend will be running at http://localhost:4000.
 
 Frontend
-
 Navigate to the frontend directory:
+
+bash
+Copy code
 cd ../xeno-dashboard-frontend
+Install dependencies:
 
-nstall dependencies:
-
+bash
+Copy code
 npm install
-
-
 Set up environment variables:
 Create a .env.local file in the xeno-dashboard-frontend directory.
 
+env
+Copy code
 REACT_APP_API_URL=http://localhost:4000
-
-
 Start the application:
 
+bash
+Copy code
 npm start
-
-
 The frontend will open at http://localhost:3000.
 
 Assumptions & Trade-offs
-
 Onboarding: For simplicity, the service accepts a pre-generated Shopify Admin API token during onboarding. A full production application would implement the complete Shopify OAuth 2.0 flow.
 
 Sync Strategy: The primary method for data sync is real-time webhooks. Manual sync APIs are provided as a fallback and for initial data backfilling.
