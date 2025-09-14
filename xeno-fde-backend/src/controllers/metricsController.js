@@ -58,17 +58,16 @@ export const getMetricsSummary = async (req, res) => {
 export const getOrdersByDate = async (req, res) => {
     try {
         const storeId = req.store.id;
-        const { startDate, endDate } = req.query;
 
-        const start = startDate ? new Date(startDate) : new Date(0);
-        const end = endDate ? new Date(endDate) : new Date();
+        // --- NEW LOGIC: Calculate the date for 7 days ago ---
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
         const orders = await prisma.order.findMany({
             where: {
                 storeId,
                 createdAt: {
-                    gte: start,
-                    lte: end,
+                    gte: sevenDaysAgo, // Fetch all orders from the last 7 days
                 },
             },
             orderBy: {
@@ -76,9 +75,8 @@ export const getOrdersByDate = async (req, res) => {
             },
         });
         
-        // This logic correctly groups the orders by day
         const revenueByDay = orders.reduce((acc, order) => {
-            const date = order.createdAt.toISOString().split('T')[0]; // Get 'YYYY-MM-DD'
+            const date = order.createdAt.toISOString().split('T')[0];
             if (!acc[date]) {
                 acc[date] = 0;
             }
@@ -86,7 +84,6 @@ export const getOrdersByDate = async (req, res) => {
             return acc;
         }, {});
 
-        // Format the aggregated data for the Chart.js
         const series = Object.keys(revenueByDay).map(date => ({
             date: date,
             revenue: revenueByDay[date],
@@ -98,6 +95,7 @@ export const getOrdersByDate = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch orders by date." });
     }
 };
+
 
 // ... keep getTopCustomers the same ...
 // GET /metrics/:tenantId/top-customers

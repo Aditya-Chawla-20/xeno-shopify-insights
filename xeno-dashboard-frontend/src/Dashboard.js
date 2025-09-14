@@ -11,6 +11,21 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
+const LogoutButton = ({ userEmail }) => {
+    const { logout } = useAuth();
+    const navigate = useNavigate();
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+    return (
+        <div className="user-info">
+            <span className="user-email">{userEmail}</span>
+            <button className="logout-button" onClick={handleLogout}>Logout</button>
+        </div>
+    );
+};
+
 const Dashboard = () => {
     const [summary, setSummary] = useState(null);
     const [ordersByDate, setOrdersByDate] = useState(null);
@@ -18,15 +33,7 @@ const Dashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [userName, setUserName] = useState('');
     const [userEmail, setUserEmail] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const { isAuthenticated, logout } = useAuth();
-    const navigate = useNavigate();
-
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+    const { isAuthenticated } = useAuth();
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -43,22 +50,9 @@ const Dashboard = () => {
         });
 
         try {
-            // --- FINAL FIX STARTS HERE ---
-            const dateParams = new URLSearchParams();
-            
-            // 1. Check if a start date is selected and format it correctly
-            if (startDate) {
-                dateParams.append('startDate', new Date(startDate).toISOString().split('T')[0]);
-            }
-            // 2. Check if an end date is selected and format it correctly
-            if (endDate) {
-                dateParams.append('endDate', new Date(endDate).toISOString().split('T')[0]);
-            }
-            // --- FINAL FIX ENDS HERE ---
-
             const [summaryRes, ordersRes, topCustomersRes] = await Promise.all([
                 apiClient.get(`/metrics/${tenantId}/summary`),
-                apiClient.get(`/metrics/${tenantId}/orders-by-date?${dateParams.toString()}`),
+                apiClient.get(`/metrics/${tenantId}/orders-by-date`),
                 apiClient.get(`/metrics/${tenantId}/top-customers`)
             ]);
 
@@ -82,7 +76,7 @@ const Dashboard = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [startDate, endDate]);
+    }, []);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -97,10 +91,7 @@ const Dashboard = () => {
                     <h1>Welcome Back, {userName}!</h1>
                     <p>Here's a snapshot of your store's performance.</p>
                 </div>
-                <div className="user-info">
-                    <span className="user-email">{userEmail}</span>
-                    <button className="logout-button" onClick={handleLogout}>Logout</button>
-                </div>
+                <LogoutButton userEmail={userEmail} />
             </header>
 
             <div className="summary-cards">
@@ -125,12 +116,7 @@ const Dashboard = () => {
             <div className="charts-container">
                 <div className="chart-card">
                     <div className="chart-header">
-                        <h2>Revenue Over Time</h2>
-                        <div className="date-filters">
-                            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                            <span>to</span>
-                            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-                        </div>
+                        <h2>Revenue Over Last 7 Days</h2>
                     </div>
                     {isLoading ? <div className="skeleton skeleton-chart"></div> : <Line data={ordersByDate || { labels: [], datasets: [] }} />}
                 </div>
