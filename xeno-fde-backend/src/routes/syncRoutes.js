@@ -1,18 +1,13 @@
-// src/routes/syncRoutes.js
-
 import express from "express";
-import {
-  syncProducts,
-  syncCustomers,
-  syncOrders,
-  getSyncLogs
-} from "../controllers/syncController.js";
+import { syncProducts, syncCustomers, syncOrders, getSyncLogs } from "../controllers/syncController.js";
+import { protect } from '../middleware/authMiddleware.js'; // <-- Import protect
 
 const router = express.Router();
 
-router.post("/products", syncProducts);
-router.post("/customers", syncCustomers);
-router.post("/orders", syncOrders);
-router.get("/logs/:storeId", getSyncLogs); // Note: GET request with param
+// Protect all sync routes
+router.post("/products", protect, syncProducts);
+router.post("/customers", protect, syncCustomers);
+router.post("/orders", protect, syncOrders);
+router.get("/logs/:storeId", protect, getSyncLogs);
 
 export default router;

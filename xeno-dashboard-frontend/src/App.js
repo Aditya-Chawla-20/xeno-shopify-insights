@@ -1,7 +1,8 @@
+// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import Dashboard from './Dashboard';
+import Home from './Home'; // <-- Import Home
 import Login from './Login';
 import Register from './Register';
 
@@ -20,7 +21,7 @@ function App() {
           path="/" 
           element={
             <PrivateRoute>
-              <Dashboard />
+              <Home /> {/* <-- Use Home instead of Dashboard */}
             </PrivateRoute>
           } 
         />
