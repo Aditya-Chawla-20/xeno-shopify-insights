@@ -56,7 +56,9 @@ export const getOrdersByDate = async (req, res) => {
         const storeId = req.store.id;
         const { startDate, endDate } = req.query;
 
-        const orders = await prisma.order.findMany({
+        // Use Prisma's `groupBy` to aggregate data directly in the database
+        const ordersGroupedByDate = await prisma.order.groupBy({
+            by: ['createdAt'], // The field to group by
             where: {
                 storeId,
                 createdAt: {
@@ -64,22 +66,27 @@ export const getOrdersByDate = async (req, res) => {
                     lte: endDate ? new Date(endDate) : new Date(),
                 },
             },
-            orderBy: { createdAt: 'asc' },
+            _sum: {
+                totalAmount: true, // Sum the totalAmount for each group
+            },
+            _count: {
+                _all: true, // Count the number of orders in each group
+            },
+            orderBy: {
+                createdAt: 'asc',
+            },
         });
-        
-        // This is a simple aggregation. You could also do this with a more complex SQL query.
-        const series = orders.reduce((acc, order) => {
-            const date = order.createdAt.toISOString().split('T')[0]; // Group by day
-            if (!acc[date]) {
-                acc[date] = { count: 0, revenue: 0 };
-            }
-            acc[date].count++;
-            acc[date].revenue += order.totalAmount;
-            return acc;
-        }, {});
 
-        res.json(Object.entries(series).map(([date, data]) => ({ date, ...data })));
+        // Format the data for the frontend chart
+        const series = ordersGroupedByDate.map(group => ({
+            date: group.createdAt.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+            revenue: group._sum.totalAmount || 0,
+            count: group._count._all,
+        }));
+
+        res.json(series);
     } catch (error) {
+        console.error("Error fetching orders by date:", error);
         res.status(500).json({ error: "Failed to fetch orders by date." });
     }
 };
